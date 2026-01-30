@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft Inventory</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            background-color: rgb(0, 87, 0);
+            color: rgb(255, 255, 255);
+            padding: 20px;
+
+        }
+
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background-color: rgb(128, 132, 74);
+            padding: 20px;
+            border-radius: 10px;
+            border-style: outset;
+            border-width: 5px;
+            border-color: #1a1a1a;
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        input {
+            padding: 10px;
+            border-radius: 8px;
+            border: none;
+            width: 200px;
+        }
+
+        button {
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            background-color: rgb(0, 123, 255);
+            color: white;
+        }
+
+        button:hover {
+            background-color: gray;
+        }
+
+        /* Minecraft-ish slots */
+        #inventoryGrid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .slot {
+            background-color: rgb(194, 190, 190);
+            border-radius: 8px;
+            padding: 6px;
+            height: 110px;
+            position: relative;
+            box-shadow: inset 3px 3px 0 #f0f0f0, inset -3px -3px 0 #373737;
+
+        }
+
+        .slotInner {
+            background-color: rgb(155, 170, 157);
+            height: 100%;
+            border-radius: 5px;
+            box-shadow: inset 2px 2px 0 #b0b0b0, inset -2px -2px 0 #1a1a1a;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            color: white;
+
+        }
+
+        .itemname {
+            font-size: 12px;
+            margin-top: 6px;
+            text-align: center;
+            word-break: break-word;
+        }
+
+        .itemQty {
+            position: absolute;
+            right: 10px;
+            bottom: 10px;
+            font-weight: bold;
+            color: black;
+        }
+
+        .smallBtn {
+            font-size: 11px;
+            padding: 6px 8px;
+            border-radius: 6px;
+            margin-top: 6px;
+            width: 48%;
+        }
+
+        .editBtn {
+            background-color: #b08b2b;
+        }
+
+        .deleteBtn {
+            background-color: #b02b2b;
+        }
+
+
+        .editBtn:hover {
+            background-color: #caa13a;
+        }
+
+        .deleteBtn:hover {
+            background-color: #c12b2b;
+        }
+
+
+        #infoText {
+            margin-top: 10px;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+    </style>
+
+</head>
+
+<body>
+    <html lang="no">
+
+    <div class="container">
+        <h1>Minecraft Inventar</h1>
+
+        <p id="infoText">
+            Legg til items og se dem dukke opp i inventaret</p>
+        <!--Input-rad-->
+        <div class="row">
+            <input id="itemName" type="text" placeholder="item name">
+            <input id="itemQty" type="number" placeholder="quantity">
+            <button onclick="addItem()">Legg til </button>
+            <button onclick="toggleInventory()">Skjul inventar</button>
+        </div>
+
+        <audio id="backgroundMusic" autoplay loop muted>
+            <source src="Minecraft Volume Alpha - 18 - Sweden.mp3" type="audio/mp3">
+        </audio>
+
+        <button id="muteBtn" onclick="toggleMute()">Spill</button>
+       
+
+
+        <!--Inventory (det vi viser/skjuler)-->
+        <div id="inventoryBox">
+            <div id="inventoryGrid"></div>
+        </div>
+
+
+
+
+
+        <script>
+            // JavaScript//
+
+
+
+            loadFromStorage();
+            showItems();
+            //denne funksjonen skal ta imot items, den skal også sjekke om det finnes fra før, og den skal også lagre og oppdatere inventoryen//
+            function addItem() {
+                let name = document.getElementById("itemName").value;
+                let qty = document.getElementById("itemQty").value;
+
+
+                if (name === "" || qty === "") {
+                    document.getElementById("infoText").innerHTML = "Skriv inn både navn og antall!"
+                    return;
+                }
+                qty = Number(qty);
+
+                // Denne koden skal sjekke om items finnes fra før og hvis det gjør så øker den i antall. Skal også kunne skrive item på hvilken som måte eks. dIaMond=diamond//
+
+                let found = false;
+                for (let i = 0; i < items.length; i++) {
+                    if (items[i].name.toLowerCase() === name.toLowerCase()) {
+                        items[i].qty = items[i].qty + qty;
+                        found = true
+                    }
+                }
+                if (found === false) {
+                    let newItem = {
+                        id: Date.now(),
+                        name: name,
+                        qty: qty
+                    };
+                    items.push(newItem);
+                }
+
+                saveToStorage();
+                showItems();
+
+                document.getElementById("itemName").value = "";
+                document.getElementById("itemQty").value = "";
+
+                document.getElementById("infoText").innerHTML = "Item lagt til!"
+            }
+
+            function toggleInventory() {
+                inventoryHidden = !inventoryHidden;
+                let box = document.getElementById("inventoryBox")
+
+                if (inventoryHidden === true) {
+                    box.style.display = "none";
+                    document.getElementById("infoText").innerHTML = "Inventoryen er skjult. Trykk 'Vis inventory' ved å trykke knappen igjen"
+                } else {
+                    box.style.display = "block";
+                    document.getElementById("infoText").innerHTML = "Inventory er synlig";
+                }
+                let buttons = document.getElementsByTagName("button");
+                if (inventoryHidden === true) {
+                    buttons[1].innerHTML = "Vis inventory";
+                }
+            }
+
+            function showItems() {
+                let html = "";
+
+                if (items.length === 0) {
+                    html = "<p>Ingen items enda</p>";
+                    document.getElementById("inventoryGrid").innerHTML = html;
+                    return;
+                }
+                for (let i = 0; i < items.length; i++) {
+                    let icon = pickIcon(items[i].name);
+
+                    html += `
+                        <div class="slot">
+                            <div class="slotInner">
+                            <div class="itemIcon">${icon}</div>
+                            <div class="itemName">${items[i].name}</div>
+
+                            <button class="smallBtn editBtn" onclick="editItem(${items[i].id})">Rediger</button>
+                            <button class="smallBtn deleteBtn" onclick="deleteItem(${items[i].id})">Slett</button>
+                        </div>
+
+                        <div class="itemQty">${items[i].qty}</div>
+                        </div>
+                    `;
+                }
+
+
+                document.getElementById("inventoryGrid").innerHTML = html;
+            }
+
+
+            function editItem(id) {
+                // Finn item
+                for (let i = 0; i < items.length; i++) {
+                    if (items[i].id === id) {
+                        let newName = prompt("Nytt navn:", items[i].name);
+                        if (newName === null) return;
+
+
+                        let newQty = prompt("Nytt antall:", items[i].qty);
+                        if (newQty === null) return;
+
+
+                        if (newName === "" || newQty === "") {
+                            alert("Kan ikke være tomt!");
+                            return;
+                        }
+
+
+                        items[i].name = newName;
+                        items[i].qty = Number(newQty);
+
+
+                        saveToStorage();
+                        showItems();
+                        return;
+                    }
+                }
+            }
+
+
+
+
+            function deleteItem(id) {
+                // Lag en ny liste uten itemet (enkel måte)
+                let newList = [];
+
+
+                for (let i = 0; i < items.length; i++)
+                    if (items[i].id !== id) {
+                        newList.push(items[i]);
+                    }
+
+
+
+                items = newList;
+
+                saveToStorage();
+                showItems();
+            }
+
+
+            function saveToStorage() {
+                localStorage.setItem("mc_items_simple", JSON.stringify(items));
+            }
+
+
+            function loadFromStorage() {
+                let data = localStorage.getItem("mc_items_simple");
+
+
+                if (data !== null) {
+                    items = JSON.parse(data);
+                }
+            }
+
+            function pickIcon(name) {
+                let n = name.toLowerCase();
+
+                if (n.includes("diamond")) return "💎";
+                if (n.includes("stone")) return "🧱";
+                if (n.includes("wood")) return "🪵";
+                if (n.includes("bread")) return "🍞";
+                if (n.includes("apple")) return "🍎";
+                if (n.includes("sword")) return "⚔️";
+                if (n.includes("pickaxe")) return "⛏️";
+                if (n.includes("beer")) return " 🍺";
+                if (n.includes("goat")) return "🐐 ";
+                if (n.includes("dolphin")) return "🐬";
+                if (n.includes("camera")) return " 📷";
+                if (n.includes("axe")) return "🪓";
+                if (n.includes("tree")) return "🌲";
+                return "📦";
+            }
+        function toggleMute() {
+            let music = document.getElementById("backgroundMusic");
+            let btn = document.getElementById("muteBtn");
+            music.muted = !music.muted;
+            if (music.muted === true) {
+            btn.innerHTML = "Spill";
+            } else {
+            btn.innerHTML = "Stop";
+            }
+            music.play();
+            music.volume=0.5;
+            
+            
+        }
+        </script>
+</body>
+
+</html>
